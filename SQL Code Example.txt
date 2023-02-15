@@ -1,0 +1,80 @@
+--QUERY 1
+SELECT * FROM event WHERE enddate - startdate >= 2 ORDER BY startdate ASC, title ASC;
+
+--QUERY 2
+SELECT E.eid, E.title FROM event E, region R WHERE E.postcode = R.postcode AND R.name = 'Golden Horseshoe' ORDER BY title ASC;
+
+--QUERY 3
+SELECT DISTINCT user.uid, user.name FROM user, review, event WHERE user.uid = review.user AND user.uid NOT IN (SELECT organizer FROM event);
+
+--QUERY 4a
+SELECT Ev.*, nrev, ascore FROM event Ev LEFT JOIN (SELECT event, COUNT(*) AS nrev, AVG(score) AS ascore FROM review R GROUP BY event) statTable ON statTable.event = Ev.eid ORDER BY ascore DESC, Ev.title ASC;
+
+--QUERY 4b
+SELECT Ev.*, nrev, ascore FROM (SELECT event, COUNT(*) AS nrev, AVG(score) AS ascore FROM review GROUP BY event) stats, event Ev WHERE stats.event = nrev >= 5 AND Ev.eid ORDER BY ascore DESC, Ev.title ASC;
+
+--QUERY 5
+SELECT Ev.eid, Ev.title FROM event Ev JOIN review Rev ON Ev.eid = Rev.event AND (Rev.reviewdate < Ev.startdate OR Rev.user = Ev.organizer);
+
+--QUERY 6
+SELECT DISTINCT u.uid, u.name FROM user u, review Re, event Ev, region Reg WHERE (Re.event = Ev.eid AND u.uid = Re.user AND u.postcode = Reg.postcode AND Ev.postcode = Reg.postcode ) OR (u.uid NOT IN (SELECT Re.user FROM review Re));
+
+--QUERY 7
+SELECT Ev1.event AS fstid, Ev2.event AS sndid FROM keyword Ev1, keyword Ev2 WHERE Ev1.word = Ev2.word AND Ev1.event <> Ev2.event GROUP BY Ev1.event, Ev2.event HAVING COUNT(Ev1.event) = (SELECT COUNT(*) FROM keyword WHERE event = Ev1.event GROUP BY event) AND COUNT(Ev2.event) = (SELECT COUNT(*) FROM keyword WHERE event = Ev2.event GROUP BY event);
+
+--QUERY 8a
+SELECT Ev.eid, SUM(Re.score) AS pscore FROM event Ev JOIN review Re ON Ev.eid = Re.event GROUP BY Ev.eid ORDER BY pscore DESC;
+
+--QUERY 8b
+WITH scores (eid, title, pscore) AS (SELECT Ev.eid, Ev.title, SUM(Rev.score) AS pscore FROM event Ev JOIN review Rev ON Ev.eid = Rev.event GROUP BY Ev.eid, Ev.title) SELECT eid, title FROM scores WHERE pscore = (SELECT MAX(pscore) FROM scores) ORDER BY title ASC;
+
+--QUERY 9
+SELECT DISTINCT temp1.user, 'keyword' as badge FROM (SELECT MAX(temp2.cnt) as mx, temp2.user FROM (SELECT COUNT(keyword.word) AS cnt, review.user, keyword.word FROM review LEFT JOIN keyword ON keyword.event = review.event GROUP BY review.user, keyword.word) temp2 GROUP BY temp2.user) temp1 INNER JOIN (SELECT COUNT(keyword.word) AS cnt, review.user, keyword.word FROM review LEFT JOIN keyword ON keyword.event = review.event GROUP BY review.user, keyword.word) temp3 ON temp3.user = temp1.user AND temp1.mx = temp3.cnt UNION SELECT reg.user, 'region' AS badge FROM (SELECT review.user, event.postcode, COUNT(review.score) AS regcnt FROM review LEFT JOIN event ON review.event = event.eid GROUP BY event.postcode, review.user) reg INNER JOIN (SELECT MAX(reg.regcnt) AS mxrc, reg.postcode FROM (SELECT review.user, event.postcode, COUNT(review.score) AS regcnt FROM review LEFT JOIN event ON review.event = event.eid GROUP BY event.postcode, review.user) reg GROUP BY reg.postcode) temp1 ON temp1.mxrc = reg.regcnt AND temp1.postcode = reg.postcode GROUP BY reg.user ORDER BY badge;
+
+CREATE TABLE Subscriber
+(
+username VARCHAR(20) NOT NULL PRIMARY KEY,
+number SMALL INT NOT NULL PRIMARY KEY,
+email CLOB NOT NULL,
+hash INT NOT NULL,
+salt INT NOT NULL
+
+);
+
+CREATE TABLE Reaction
+(
+id VARCHAR(20) PRIMARY KEY,
+title CLOB NOT NULL,
+content CLOB NOT NULL,
+FOREIGN KEY(username, number) REFERENCES Subscriber(username, number)
+PRIMARY KEY(username, number, id)
+);
+
+CREATE TABLE Friend_Of
+(
+fusername VARCHAR(20) NOT NULL,
+fnumber SMALLINT NOT NULL,
+tusername VARCHAR(20) NOT NULL,
+tnumber SMALL INT NOT NULL,
+FOREIGN KEY(fusername, fnumber) REFERENCES Subscriber(username, number)
+FOREIGN KEY(tusername, tnumber) REFERENCES Subscriber(username, number)
+PRIMARY KEY(fusername, fnumber, tusername, tnumber)
+);
+
+CREATE TABLE ThreadR
+(
+susername VARCHAR(20) NOT NULL,
+snumber VARCHAR(20) NOT NULL,
+rid VARCHAR (20) NOT NULL,
+FOREIGN KEY(susername, snumber, rid) REFERENCES Reaction(username, number, id),
+PRIMARY KEY(susername, snumber, rid)
+);
+
+CREATE TABLE ReviewR
+(
+susername VARCHAR(20) NOT NULL,
+snumber VARCHAR(20) NOT NULL,
+rid VARCHAR (20) NOT NULL,
+FOREIGN KEY(susername, snumber, rid) REFERENCES Reaction(username, number, id),
+PRIMARY KEY(susername, snumber, rid)
+);
