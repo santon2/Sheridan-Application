@@ -9,6 +9,10 @@
 #include <fstream>
 #include <string>
 
+// This code is the project that I recorded and included in this repository as an mp4. 
+// It is a simple creation of 3 "planets" with real ratios used to calculate rotation frequency and skew.
+
+
 static unsigned int ss_id = 0;
 void dump_framebuffer_to_ppm(std::string prefix, unsigned int width, unsigned int height) {
     int pixelChannel = 3;
@@ -56,7 +60,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 
-// his/shader
+// shader
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
 "layout (location = 1) in vec3 vertexColor;\n"
@@ -249,7 +253,6 @@ int main()
         0.0f, -23.4f, 0.0f  //Sun, Earth, Moon tilt respectively
     };
     
-    //ASSIGNMENT 0 CODE
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
