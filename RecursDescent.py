@@ -1,6 +1,9 @@
 from __future__ import print_function
 
-# tokens and corresponding values as returned by the scanner
+# NOAH SANTOS: the purpose of this code is to be able to parse input strings (such as 's', line 399) 
+# and interpret it in accordance to a set of grammar rules to ensure it meaningful.
+
+# tokens and values 
 EOI = 0    #end of input
 NUM = 1    #an unsigned decimal number with at most 4 digits after . , at most
            #9 significant digits and no leading zeroes
