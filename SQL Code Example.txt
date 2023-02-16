@@ -1,3 +1,5 @@
+-- This SQL code is a collection of queries and tables created in my Databases course.
+
 --QUERY 1
 SELECT * FROM event WHERE enddate - startdate >= 2 ORDER BY startdate ASC, title ASC;
 
